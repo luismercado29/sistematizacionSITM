@@ -1,0 +1,59 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+<h3>{{msg}}</h3>
+<h2>Lista de buses</h2>
+<table class="table table-striped">
+    <thead style="background-color: orange;color: white;">
+    <td>ID DESPACHO</td>
+    <td>USER NAME</td>
+    <td>NOMBRE BUS</td>
+    <td>SALIDA</td>
+    <td>DESTINO</td>
+    <td>TIPO DE BUS</td>
+    <td>CONCESIONARIO</td>
+    <td>FECHA</td>
+    <td>HORA</td>
+    <td>STATUS</td>
+
+
+    </thead>
+
+    {% for row in book_list %}
+    <tr>
+        <td>{{row.id}}</td>
+        <td>{{row.name}}</td>
+        <td>{{row.bus_name}}</td>
+        <td>{{row.source}}</td>
+        <td>{{row.dest}}</td>
+        <td>{{row.nos}}</td>
+        <td>{{row.price}}</td>
+        <td>{{row.date}}</td>
+        <td>{{row.time}}</td>
+        <td>{{row.status}}</td>
+
+
+    </tr>
+    {% endfor %}
+</table>
+<form action="{% url 'cancellings' %}" method="post">
+    <h3>Elige autobús para despachar</h3>
+    {% csrf_token %}
+    <div class="col-auto">
+        <label for="example-email-input" class="col-2 col-form-label">ID del bus</label>
+        <div class="col-5">
+            <input name='bus_id' class="form-control" type="number" id="example-email-input">
+        </div>
+    </div>
+
+    <br>
+    <br>
+    <div class="pull-right">
+        <button type="submit" class="btn btn-danger float-left">Cancelar bus</button>
+    </div>
+
+
+    {{error}}
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+
+<div class="container">
+        <div class="row">
+            <div class="col-sm-6 mx-auto" style="margin-top: 70px">
+                <form action="{% url 'signout' %}" method="post">
+                    {% csrf_token %}
+                    {{user}} Inicio de sesion exitoso! ID:{{id}}
+
+
+                    <div class="pull-right">
+                        <button type="Submit" class="btn btn-success float-right">Cerrar sesion</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

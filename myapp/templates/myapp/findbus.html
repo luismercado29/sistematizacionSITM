@@ -1,0 +1,70 @@
+{% extends 'myapp/base.html' %}
+{% block content %}
+<div class="container">
+        <div class="row">
+            <div class="col-sm-6 mx-auto" style="margin-top: 70px">
+                <h2>BUSCAR BUS</h2>
+                <form action="{% url 'findbus' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group row">
+                        <label for="example-email-input" class="col-2 col-form-label">Desde</label>
+                        <div class="col-10">
+                            <select name='source' class="form-control" type="text" id="example-email-input">
+                                <option value="Portal">Portal</option>
+                                <option value="Campanos-13Junio">Campanos-13Junio</option>
+                                <option value="Portal-Bosque">Portal-Bosque</option>
+                                <option value="Portal-Consulado">Portal-Consulado</option>
+                                <option value="Terminal-PRomero">Terminal-PRomero</option>
+                                <option value="Ciudadela2000-C/Luque">Ciudadela2000-C/Luque</option>
+                                <option value="Variante">Variante</option>
+                                <option value="CiudadJardin">CiudadJardin</option>
+                                <option value="Portal">Portal</option>
+                                <option value="Mandela-SanFernando">Mandela-SanFernando</option>
+                                <option value="Mandela-Socorro">Mandela-Socorro</option>
+                                <option value="SimonBolivar-Socorro">SimonBolivar-Socorro</option>
+                                <option value="BlasDeLezo">BlasDeLezo</option>
+                                <option value="Campestre">Campestre</option>
+                                <option value="NuevoBosque">NuevoBosque</option>
+                                <option value="FlorDelCampo">FlorDelCampo</option>
+                                <option value="Pozon-VillaEstrella">Pozon-VillaEstrella</option>
+                                <option value="Ciudadela2000-Manga">Ciudadela2000-Manga</option>
+                                <option value="Bodeguita">Bodeguita</option>
+
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="example-email-input" class="col-2 col-form-label">Destino</label>
+                        <div class="col-10">
+                            <select name='destination' class="form-control" type="text">
+                                <option value="Centro">Centro</option>
+                                <option value="Crespo">Crespo</option>
+                                <option value="Bocagrande">Bocagrande</option>
+                                <option value="Portal">Portal</option>
+                                <option value="UniversidadTecnologica">UniversidadTecnologica</option>
+                                <option value="SantaLucia">SantaLucia</option>
+                                <option value="Terminal">Terminal</option>
+                                <option value="ZonaNorte">ZonaNorte</option>
+                                
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="example-email-input" class="col-2 col-form-label" >Fecha</label>
+                        <div class="col-10">
+                            <input name='date' class="form-control" type="date">
+                        </div>
+                    </div>
+                    <div class="pull-right">
+                        <button type="submit" class="btn btn-success float-right">Buscar Bus</button>
+                    </div>
+                    {{error}}
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
