@@ -1,0 +1,7 @@
+list.html
+<select name="select" class="form-control">
+  <option value="value1">Doble</option>
+  <option value="value3">Alimentador</option>
+</select>
+
+<input name='no_seats' class="form-control" type="text">
