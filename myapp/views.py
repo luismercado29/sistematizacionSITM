@@ -68,7 +68,7 @@ def bookings(request):
                 book = Book.objects.create(name=username_r, email=email_r, userid=userid_r, bus_name=name_r,
                                            source=source_r, busid=id_r,
                                            dest=dest_r, price=price_r, nos=seats_r, date=date_r, time=time_r,
-                                           status='DESPACHADO')
+                                           status=Book.DESPACHADO)
                 print('------------book id-----------', book.id)
                 # book.save()
                 return render(request, 'myapp/bookings.html', locals())
@@ -93,7 +93,7 @@ def cancellings(request):
             rem_r = bus.rem
             Bus.objects.filter(id=book.busid).update(rem=rem_r)
             #nos_r = book.nos - seats_r
-            Book.objects.filter(id=id_r).update(status='CANCELADO')
+            Book.objects.filter(id=id_r).update(status=Book.CANCELADO)
             Book.objects.filter(id=id_r).update(nos=0)
             return redirect(seebookings)
         except Book.DoesNotExist:
