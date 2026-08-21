@@ -15,6 +15,11 @@ class Bus(models.Model):
     date = models.DateField()
     time = models.TimeField()
 
+    class Meta:
+        # Sin esto Django pluraliza anadiendo una 's' y muestra "Buss".
+        verbose_name = 'bus'
+        verbose_name_plural = 'buses'
+
     def __str__(self):
         return self.bus_name
 
@@ -23,11 +28,29 @@ class Drivers(models.Model):
     nombre= models.CharField(max_length=50)
     licencia= models.CharField(max_length=10)
 
+    class Meta:
+        # Igual que arriba: por defecto se mostraba como "Driverss".
+        verbose_name = 'conductor'
+        verbose_name_plural = 'conductores'
+
+    def __str__(self):
+        return f'{self.nombre} ({self.licencia})'
+
 class User(models.Model):
+    """Modelo heredado. La autenticacion usa django.contrib.auth.models.User.
+
+    Se conserva porque su tabla ya existe con datos, pero no interviene en el
+    login ni en los permisos.
+    """
+
     user_id = models.AutoField(primary_key=True)
     email = models.EmailField()
     name = models.CharField(max_length=30)
     password = models.CharField(max_length=30)
+
+    class Meta:
+        verbose_name = 'usuario (modelo heredado)'
+        verbose_name_plural = 'usuarios (modelo heredado)'
 
     def __str__(self):
         return self.email
@@ -51,6 +74,10 @@ class Book(models.Model):
     date = models.DateField()
     time = models.TimeField()
     status = models.CharField(choices=TICKET_STATUSES, default=DESPACHADO, max_length=2)
+
+    class Meta:
+        verbose_name = 'despacho'
+        verbose_name_plural = 'despachos'
 
     def __str__(self):
         return self.email
