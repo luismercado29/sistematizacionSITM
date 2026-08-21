@@ -4,8 +4,11 @@ from decimal import Decimal
 # Create your views here.
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import User, Bus, Book
+from .models import Bus, Book, Drivers
 from django.contrib.auth import authenticate, login, logout
+# Se usa el User de Django para autenticar. Antes tambien se importaba
+# myapp.models.User, que quedaba pisado por este import y solo generaba
+# confusion: ese modelo no interviene en el login.
 from django.contrib.auth.models import User
 from .forms import UserLoginForm, UserRegisterForm
 from django.contrib.auth.decorators import login_required
@@ -37,11 +40,22 @@ def findbus(request):
 
 @login_required(login_url='signin')
 def drivers(request):
-    context = {}
+    """Registra un conductor.
+
+    Antes esta vista no devolvia nada: al terminar caia en None y Django
+    lanzaba "The view didn't return an HttpResponse object". No se notaba
+    porque no esta enlazada en urls.py, pero bastaba con enrutarla para que
+    diera error 500. Los conductores tambien se pueden gestionar desde /admin/.
+    """
     if request.method == 'POST':
-        id= request.POST.get('id')
-        nombre= request.POST.get('nombre')
-        licencia= request.POST.get('licencia')
+        nombre = request.POST.get('nombre')
+        licencia = request.POST.get('licencia')
+        if nombre and licencia:
+            Drivers.objects.create(nombre=nombre, licencia=licencia)
+            return redirect('home')
+        return render(request, 'myapp/error.html',
+                      {'error': 'Nombre y licencia son obligatorios.'})
+    return redirect('home')
 
 
 @login_required(login_url='signin')

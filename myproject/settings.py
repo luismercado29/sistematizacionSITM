@@ -167,12 +167,26 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# WhiteNoise sirve los estaticos localizandolos con los finders de Django, sin
+# depender de haber corrido collectstatic.
+#
+# Hace falta porque en una funcion serverless de Vercel no hay un paso de build
+# donde ejecutarlo, y el almacenamiento con manifiesto
+# (CompressedManifestStaticFilesStorage) exige un staticfiles.json que no
+# existiria: cualquier {% static %} reventaria, incluido todo /admin/.
+#
+# Los templates propios usan Bootstrap por CDN, asi que los unicos estaticos
+# reales son los del panel de administracion.
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = False
+
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
