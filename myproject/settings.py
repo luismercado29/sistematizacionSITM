@@ -32,7 +32,11 @@ def _env_bool(name, default=False):
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = _env_bool('DEBUG', True)
+#
+# Vercel define la variable VERCEL en sus entornos, asi que alli el valor por
+# defecto es False: si se olvida configurar DEBUG, la app no queda mostrando
+# trazas de error completas a cualquiera. En local sigue siendo True.
+DEBUG = _env_bool('DEBUG', not os.getenv('VERCEL'))
 
 if not SECRET_KEY:
     if DEBUG:
@@ -48,17 +52,21 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-_vercel_host = os.getenv('VERCEL_URL')
-if _vercel_host:
-    ALLOWED_HOSTS.append(_vercel_host)
-    ALLOWED_HOSTS.append('.vercel.app')
-
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
 ]
-if _vercel_host:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{_vercel_host}')
+
+# En Vercel se confia en los dominios *.vercel.app aunque VERCEL_URL no este
+# expuesta. Sin esto, ALLOWED_HOSTS podria quedar vacio y con DEBUG=False
+# Django rechazaria todas las peticiones con un 400.
+if os.getenv('VERCEL'):
+    ALLOWED_HOSTS.append('.vercel.app')
     CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
+
+    _vercel_host = os.getenv('VERCEL_URL')
+    if _vercel_host:
+        ALLOWED_HOSTS.append(_vercel_host)
+        CSRF_TRUSTED_ORIGINS.append(f'https://{_vercel_host}')
 
 
 # Application definition
