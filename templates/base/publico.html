@@ -1,0 +1,32 @@
+{% extends 'base/base.html' %}{% load sitm %}
+{% block cuerpo %}
+<header class="pub-cab">
+  <div class="envoltura interior">
+    <a class="marca" href="{% url 'publico:inicio' %}" aria-label="SITM Cartagena, inicio">
+      <span class="marca-logo">{% icono 'bus' %}</span>
+      <span class="marca-texto"><strong>SITM Cartagena</strong><small>¿Dónde va mi bus?</small></span>
+    </a>
+    <nav class="pub-nav" aria-label="Principal">
+      <a class="enlace {% if request.resolver_match.url_name == 'inicio' %}is-active{% endif %}" href="{% url 'publico:inicio' %}" aria-label="Inicio">{% icono 'estacion' %}<span>Estaciones</span></a>
+      <a class="enlace {% activo '/mapa/' %}" href="{% url 'publico:mapa' %}" aria-label="Mapa en vivo">{% icono 'mapa' %}<span>Mapa en vivo</span></a>
+      <a class="enlace {% activo '/rutas/' %}" href="{% url 'publico:inicio' %}#rutas" aria-label="Rutas">{% icono 'ruta' %}<span>Rutas</span></a>
+      {% include 'componentes/boton_tema.html' %}
+      {% if es_operador %}
+      <a class="btn btn-secundario btn-sm" href="{% url 'operacion:tablero' %}">{% icono 'tablero' 'sm' %}<span class="solo-escritorio">Panel</span></a>
+      {% else %}
+      <a class="btn btn-secundario btn-sm" href="{% url 'cuentas:ingresar' %}" aria-label="Acceso para operadores">{% icono 'candado' 'sm' %}<span class="solo-escritorio">Operadores</span></a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+{% if MODO_DEMO %}<div class="demo-banda">{% icono 'info' 'sm' %} Demostración con datos ficticios: rutas, buses y tiempos no corresponden a la operación real.</div>{% endif %}
+<main id="contenido" class="pub-main" tabindex="-1">
+  {% block contenido %}{% endblock %}
+</main>
+<footer class="pub-pie">
+  <div class="envoltura">
+    <span>SITM Cartagena · Sistema de despacho y seguimiento</span>
+    <span>Los tiempos son estimados y pueden variar según el tráfico.</span>
+  </div>
+</footer>
+{% endblock %}

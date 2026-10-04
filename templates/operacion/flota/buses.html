@@ -1,0 +1,51 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Flota{% endblock %}
+{% block titulo_barra %}Flota{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <h1>Flota</h1>
+    <p>Estado de cada vehículo y su despacho actual.</p>
+  </div>
+  {% if es_supervisor %}<a class="btn btn-primario" href="{% url 'operacion:bus_nuevo' %}">{% icono 'mas' 'sm' %} Registrar bus</a>{% endif %}
+</div>
+
+<nav class="segmentado mb-5" aria-label="Filtrar por estado" style="flex-wrap:wrap">
+  {% for valor, etiqueta, n in filtros %}
+  <a href="{% if valor %}?estado={{ valor }}{% else %}?{% endif %}" style="display:flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:6px;text-decoration:none;font-weight:500;{% if valor == estado %}background:var(--surface);color:var(--text);box-shadow:var(--shadow-1){% else %}color:var(--text-2){% endif %}"
+     {% if valor == estado %}aria-current="true"{% endif %}>{{ etiqueta }} <span class="mono sutil">{{ n }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  {% if buses %}
+  <div class="tabla-scroll">
+    <table class="tabla apilable">
+      <thead><tr><th scope="col">Bus</th><th scope="col">Placa</th><th scope="col">Tipología</th><th scope="col">Capacidad</th><th scope="col">Operador</th><th scope="col">Estado</th><th scope="col">Despacho actual</th>{% if es_supervisor %}<th scope="col"><span class="sr-only">Acciones</span></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for b in buses %}
+        <tr>
+          <td data-label="Bus" class="mono principal">{{ b.numero }}</td>
+          <td data-label="Placa" class="mono">{{ b.placa }}</td>
+          <td data-label="Tipología">{{ b.get_tipologia_display }}{% if b.modelo %} <span class="sutil">· {{ b.modelo }}</span>{% endif %}</td>
+          <td data-label="Capacidad" class="mono">{{ b.capacidad }}</td>
+          <td data-label="Operador">{{ b.operador|default:'—' }}</td>
+          <td data-label="Estado"><span class="badge {{ b.estado }}">{{ b.get_estado_display }}</span></td>
+          <td data-label="Despacho actual">
+            {% with d=b.activos.0 %}{% if d %}<a href="{% url 'operacion:despacho' d.pk %}" class="fila" style="gap:8px"><span class="chip-ruta" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span><span class="mono">{{ d.folio }}</span></a>{% else %}<span class="sutil">—</span>{% endif %}{% endwith %}
+          </td>
+          {% if es_supervisor %}<td class="acciones" data-label=""><a class="btn btn-fantasma btn-sm" href="{% url 'operacion:bus_editar' b.pk %}" aria-label="Editar bus {{ b.numero }}">{% icono 'editar' 'sm' %} Editar</a></td>{% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="vacio">
+    <span class="vacio-icono">{% icono 'bus' 'lg' %}</span>
+    <h2>No hay buses en este estado</h2>
+    {% if es_supervisor %}<a class="btn btn-primario" href="{% url 'operacion:bus_nuevo' %}">{% icono 'mas' 'sm' %} Registrar bus</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

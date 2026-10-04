@@ -1,0 +1,15 @@
+{% extends 'base/publico.html' %}{% load sitm %}
+{% block titulo %}Mapa en vivo{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="envoltura">
+  <div class="pagina-cab" style="padding-top:var(--s6)">
+    <div>
+      <h1>Mapa en vivo</h1>
+      <p>Toca un bus para ver su próxima parada, o una estación para ver las llegadas.</p>
+    </div>
+  </div>
+  {% include 'componentes/mapa_vivo.html' with rutas=rutas id='mapa-publico' json_id='red-publico' %}
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

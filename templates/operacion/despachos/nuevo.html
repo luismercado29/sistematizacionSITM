@@ -1,0 +1,76 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Nuevo despacho{% endblock %}
+{% block titulo_barra %}Nuevo despacho{% endblock %}
+{% block accion_barra %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url 'operacion:despachos' %}">Despachos</a>{% icono 'derecha' 'sm' %}<span>Nuevo</span></nav>
+    <h1>Despachar un bus</h1>
+    <p>Asigna ruta, bus y conductor. El sistema valida disponibilidad, licencia y tipo de vehículo.</p>
+  </div>
+</div>
+
+<div class="grid-principal">
+  <section class="card">
+    <form method="post" class="card-cuerpo pila" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="aviso error" role="alert">{% icono 'alerta' %}<div>{{ form.non_field_errors|join:' ' }}</div></div>
+      {% endif %}
+      {% if sin_buses %}
+      <div class="aviso warn">{% icono 'alerta' %}<div><strong>No hay buses disponibles.</strong> Cierra recorridos terminados o revisa los buses en taller en <a href="{% url 'operacion:buses' %}">Flota</a>.</div></div>
+      {% endif %}
+      {% if sin_conductores %}
+      <div class="aviso warn">{% icono 'alerta' %}<div><strong>No hay conductores disponibles.</strong> Todos están asignados, en descanso o con la licencia vencida.</div></div>
+      {% endif %}
+
+      <fieldset>
+        <legend>1. Recorrido</legend>
+        <div class="form-grid">
+          {% include 'componentes/campo.html' with campo=form.ruta clase='ancho' %}
+        </div>
+      </fieldset>
+      <hr class="separador">
+      <fieldset>
+        <legend>2. Vehículo y conductor</legend>
+        <div class="form-grid">
+          {% include 'componentes/campo.html' with campo=form.bus %}
+          {% include 'componentes/campo.html' with campo=form.conductor %}
+        </div>
+      </fieldset>
+      <hr class="separador">
+      <fieldset>
+        <legend>3. Salida</legend>
+        <div class="pila">
+          <div class="segmentado" role="radiogroup" aria-label="Momento de salida">
+            {% for radio in form.cuando %}
+            <label for="{{ radio.id_for_label }}">{{ radio.tag }} {% if radio.data.value == 'ahora' %}{% icono 'iniciar' 'sm' %}{% else %}{% icono 'calendario' 'sm' %}{% endif %} {{ radio.choice_label }}</label>
+            {% endfor %}
+          </div>
+          <div class="form-grid">
+            {% include 'componentes/campo.html' with campo=form.hora_programada atributos='data-grupo-hora' %}
+          </div>
+          {% include 'componentes/campo.html' with campo=form.observaciones %}
+        </div>
+      </fieldset>
+
+      <div class="fila entre" style="padding-top:var(--s2)">
+        <a class="btn btn-fantasma" href="{% url 'operacion:tablero' %}">Cancelar</a>
+        <button class="btn btn-primario" type="submit" {% if sin_buses or sin_conductores %}disabled{% endif %}>{% icono 'despachar' 'sm' %} Confirmar despacho</button>
+      </div>
+    </form>
+  </section>
+
+  <aside class="card" aria-labelledby="t-reglas" style="align-self:start">
+    <div class="card-cab"><h2 id="t-reglas">{% icono 'info' %} Reglas de despacho</h2></div>
+    <ul class="lista-simple">
+      <li>Solo se listan buses <strong>disponibles</strong> y sin otro despacho activo.</li>
+      <li>Los conductores deben estar <strong>activos</strong> y con <strong>licencia vigente</strong>.</li>
+      <li>Los buses <strong>articulados</strong> exigen licencia <strong>C3</strong>.</li>
+      <li>"Sale ahora" registra la salida de inmediato; "Programar" la deja en cola para darle salida desde el tablero.</li>
+      <li>Toda acción queda en la bitácora con tu usuario y la hora.</li>
+    </ul>
+  </aside>
+</div>
+{% endblock %}

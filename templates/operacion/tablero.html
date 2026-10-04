@@ -1,0 +1,168 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Tablero{% endblock %}
+{% block titulo_barra %}Tablero de operación{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <p class="eyebrow">{% now 'l j \d\e F' %}</p>
+    <h1>Hola, {{ request.user.get_short_name|default:request.user.username }}</h1>
+    <p>Así va la operación en este momento.</p>
+  </div>
+  <div class="fila">
+    <a class="btn btn-secundario" href="{% url 'operacion:mapa' %}">{% icono 'en-vivo' 'sm' %} Mapa en vivo</a>
+    <a class="btn btn-primario" href="{% url 'operacion:nuevo' %}">{% icono 'despachar' 'sm' %} Despachar bus</a>
+  </div>
+</div>
+
+<section class="kpis" aria-label="Indicadores del día">
+  <article class="card kpi ok">
+    <div class="kpi-cab">Buses en ruta <span class="kpi-icono">{% icono 'en-vivo' %}</span></div>
+    <p class="kpi-valor">{{ kpi.flota.en_servicio }}<small> / {{ kpi.flota.total }}</small></p>
+    <p class="kpi-nota">Flota total registrada</p>
+  </article>
+  <article class="card kpi">
+    <div class="kpi-cab">Disponibles para despacho <span class="kpi-icono">{% icono 'bus' %}</span></div>
+    <p class="kpi-valor">{{ kpi.flota.disponibles }}</p>
+    <div class="barra" role="img" aria-label="{{ kpi.disponibilidad }}% de la flota disponible"><span style="width: {{ kpi.disponibilidad }}%"></span></div>
+    <p class="kpi-nota">{{ kpi.flota.taller }} en taller o fuera de servicio</p>
+  </article>
+  <article class="card kpi acento">
+    <div class="kpi-cab">Despachos hoy <span class="kpi-icono">{% icono 'nota' %}</span></div>
+    <p class="kpi-valor">{{ kpi.despachos_hoy }}</p>
+    <p class="kpi-nota">{{ kpi.finalizados_hoy }} cerrados · {{ kpi.cancelados_hoy }} cancelados</p>
+  </article>
+  <article class="card kpi {% if kpi.puntualidad is not None and kpi.puntualidad < 85 %}warn{% else %}ok{% endif %}">
+    <div class="kpi-cab">Puntualidad de salida <span class="kpi-icono">{% icono 'reloj' %}</span></div>
+    <p class="kpi-valor">{{ kpi.puntualidad|porcentaje }}</p>
+    <p class="kpi-nota">Salidas con menos de 3 min de retraso</p>
+  </article>
+  <article class="card kpi {% if kpi.licencias_por_vencer %}warn{% endif %}">
+    <div class="kpi-cab">Conductores activos <span class="kpi-icono">{% icono 'licencia' %}</span></div>
+    <p class="kpi-valor">{{ kpi.conductores_activos }}</p>
+    <p class="kpi-nota">{% if kpi.licencias_por_vencer %}<a href="{% url 'operacion:conductores' %}">{{ kpi.licencias_por_vencer }} licencia{{ kpi.licencias_por_vencer|pluralize }} vence{{ kpi.licencias_por_vencer|pluralize:'n' }} en 30 días</a>{% else %}Sin licencias por vencer{% endif %}</p>
+  </article>
+</section>
+
+<div class="grid-principal">
+  <div class="grid">
+    <section class="card" aria-labelledby="t-mapa">
+      <div class="card-cab">
+        <h2 id="t-mapa">{% icono 'en-vivo' %} Flota en vivo</h2>
+        <span class="actualizado"><span class="punto-vivo"><span data-conteo-buses="mapa-tablero">{{ en_ruta|length }}</span>&nbsp;en ruta</span> · <span data-estado-mapa="mapa-tablero">Cargando…</span></span>
+      </div>
+      {% red_mapa rutas_mapa as red %}{{ red|json_script:'red-tablero' }}
+      <div class="mapa en-card" id="mapa-tablero" data-mapa data-sin-rueda data-api="{% url 'api:flota' %}" data-red="red-tablero"
+           data-enlace="/operacion/despachos/{id}/" data-refresco="{{ REFRESCO_S }}" role="region" aria-label="Mapa con la posición de los buses en ruta"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-enruta">
+      <div class="card-cab">
+        <h2 id="t-enruta">{% icono 'bus' %} Buses en ruta</h2>
+        <a class="btn btn-fantasma btn-sm" href="{% url 'operacion:despachos' %}?estado=en_ruta">Ver todos {% icono 'derecha' 'sm' %}</a>
+      </div>
+      {% if en_ruta %}
+      <div class="tabla-scroll">
+        <table class="tabla apilable">
+          <thead><tr><th scope="col">Bus</th><th scope="col">Ruta</th><th scope="col">Conductor</th><th scope="col">Salida</th><th scope="col">Avance</th><th scope="col"><span class="sr-only">Acciones</span></th></tr></thead>
+          <tbody>
+          {% for e in en_ruta|slice:':8' %}{% with d=e.despacho %}
+            <tr>
+              <td data-label="Bus"><a class="fila-enlace mono" href="{% url 'operacion:despacho' d.pk %}">{{ d.bus }}</a></td>
+              <td data-label="Ruta"><span class="chip-ruta" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span></td>
+              <td data-label="Conductor">{{ d.conductor.nombre }}</td>
+              <td data-label="Salida" class="mono">{{ d.hora_salida|time:'H:i' }}</td>
+              <td data-label="Avance" style="min-width:140px">
+                <div class="celda-doble">
+                  <div class="barra" role="img" aria-label="Avance {% widthratio e.progreso 1 100 %}%"><span style="width: {% widthratio e.progreso 1 100 %}%; background: {{ d.ruta.color }}"></span></div>
+                  <small>{% if e.en_destino %}En terminal, pendiente de cierre{% else %}Próx.: {{ e.proxima_parada.estacion.nombre }} · {{ e.minutos_a_destino|minutos }}{% endif %}</small>
+                </div>
+              </td>
+              <td class="acciones" data-label="">
+                <form method="post" action="{% url 'operacion:finalizar' d.pk %}">
+                  {% csrf_token %}<input type="hidden" name="siguiente" value="{{ request.path }}">
+                  <button class="btn {% if e.en_destino %}btn-exito{% else %}btn-secundario{% endif %} btn-sm" type="submit">{% icono 'bandera' 'sm' %} Cerrar</button>
+                </form>
+              </td>
+            </tr>
+          {% endwith %}{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="vacio">
+        <span class="vacio-icono">{% icono 'bus' 'lg' %}</span>
+        <h3>No hay buses en ruta</h3>
+        <p>Cuando despaches un bus aparecerá aquí con su avance y tiempo a destino.</p>
+        <a class="btn btn-primario" href="{% url 'operacion:nuevo' %}">{% icono 'despachar' 'sm' %} Despachar el primero</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="grid" style="align-content:start">
+    <section class="card" aria-labelledby="t-frecuencia">
+      <div class="card-cab"><h2 id="t-frecuencia">{% icono 'reloj' %} Frecuencia por ruta</h2></div>
+      {% if rutas %}
+      <ul class="rutas-estado">
+        {% for r in rutas %}
+        <li>
+          <span class="chip-ruta" style="--ruta:{{ r.ruta.color }}">{{ r.ruta.codigo }}</span>
+          <div>
+            <div class="nombre">{{ r.ruta.nombre }}</div>
+            <div class="meta">
+              {{ r.en_ruta }} en ruta · cada {{ r.ruta.frecuencia_min }} min ·
+              {% if r.minutos_desde_ultima is None %}sin salidas{% else %}última hace {{ r.minutos_desde_ultima|minutos }}{% endif %}
+            </div>
+          </div>
+          {% if r.situacion == 'al_dia' %}
+            <span class="badge al_dia" title="Próxima salida en {{ r.faltan }} min">En {{ r.faltan }} min</span>
+          {% elif r.situacion == 'programado' %}
+            <span class="badge programado">Programado</span>
+          {% else %}
+            <a class="btn btn-sm {% if r.situacion == 'atrasado' %}btn-peligro{% else %}btn-secundario{% endif %}" href="{% url 'operacion:nuevo' %}?ruta={{ r.ruta.pk }}"
+               aria-label="Despachar en la ruta {{ r.ruta.codigo }}{% if r.situacion == 'atrasado' %}, atrasada{% endif %}">
+              {% if r.situacion == 'atrasado' %}{% icono 'alerta' 'sm' %} Atrasada{% else %}{% icono 'despachar' 'sm' %} Toca salida{% endif %}
+            </a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="vacio"><p>No hay rutas activas. Configúralas en Administración.</p></div>
+      {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="t-programados">
+      <div class="card-cab"><h2 id="t-programados">{% icono 'calendario' %} Próximas salidas</h2></div>
+      {% if proximos %}
+      <ul class="lista-simple">
+        {% for d in proximos %}
+        <li class="fila entre">
+          <div class="fila" style="gap:var(--s3)">
+            <span class="mono" style="font-weight:600">{{ d.hora_programada|time:'H:i' }}</span>
+            <span class="chip-ruta" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span>
+            <a class="mono" href="{% url 'operacion:despacho' d.pk %}">{{ d.bus }}</a>
+          </div>
+          <form method="post" action="{% url 'operacion:iniciar' d.pk %}">
+            {% csrf_token %}<input type="hidden" name="siguiente" value="{{ request.path }}">
+            <button class="btn btn-primario btn-sm" type="submit">{% icono 'iniciar' 'sm' %} Dar salida</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="vacio" style="padding:var(--s5)"><p>No hay salidas programadas.</p></div>
+      {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="t-actividad">
+      <div class="card-cab"><h2 id="t-actividad">{% icono 'actividad' %} Actividad reciente</h2></div>
+      <div class="card-cuerpo compacto">
+        {% include 'operacion/despachos/_bitacora.html' with eventos=eventos mostrar_despacho=True %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base/publico.html' %}{% load sitm static %}
+{% block titulo %}Llegadas en {{ estacion.nombre }}{% endblock %}
+{% block descripcion %}Próximos buses y tiempos de llegada en la estación {{ estacion.nombre }}.{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="envoltura">
+  <div class="pagina-cab" style="padding-top:var(--s6)">
+    <div>
+      <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url 'publico:inicio' %}">Estaciones</a>{% icono 'derecha' 'sm' %}<span>{{ estacion.nombre }}</span></nav>
+      <p class="eyebrow">{{ estacion.get_tipo_display }}</p>
+      <h1>{{ estacion.nombre }}</h1>
+      <div class="fila mt-2">{% for r in rutas %}<a class="chip-ruta" style="--ruta:{{ r.color }}" href="{% url 'publico:ruta' r.codigo %}" aria-label="Ruta {{ r.codigo }}, {{ r.nombre }}">{{ r.codigo }}</a>{% endfor %}</div>
+    </div>
+    <form method="get" action="{% url 'publico:inicio' %}" class="fila" data-sin-bloqueo>
+      <label class="sr-only" for="otra">Cambiar de estación</label>
+      <select class="campo select" id="otra" name="estacion" style="min-width:220px" data-enviar-al-cambiar>
+        <option value="">Cambiar de estación</option>
+        {% for e in otras %}<option value="{{ e.codigo }}">{{ e.nombre }}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn btn-secundario" type="submit">Ir</button></noscript>
+    </form>
+  </div>
+
+  <div class="grid-principal">
+    <section class="card panel-llegadas" aria-labelledby="t-llegadas">
+      <div class="card-cab">
+        <h2 id="t-llegadas">{% icono 'reloj' %} Próximas llegadas</h2>
+        <span class="actualizado"><span class="punto-vivo">En vivo</span> · <span data-estado-llegadas>Actualizado ahora</span></span>
+      </div>
+      <p class="sr-only" aria-live="polite" data-llegadas-anuncio></p>
+      <ul class="llegadas" data-llegadas="{% url 'api:llegadas' estacion.codigo %}" data-refresco="{{ REFRESCO_S }}" {% if not llegadas %}hidden{% endif %}>
+        {% for l in llegadas %}
+        <li class="llegada{% if l.minutos <= 2 %} inminente{% endif %}">
+          <span class="chip-ruta lg" style="--ruta:{{ l.color }}">{{ l.ruta }}</span>
+          <div>
+            <div class="destino">Hacia {{ l.destino }}</div>
+            <div class="detalle"><span>Bus {{ l.bus }}</span><span aria-hidden="true">·</span><span>{{ l.tipologia }}</span>
+              {% if l.fuente == 'gps' %}<span class="fuente gps">GPS</span>{% elif l.fuente == 'programado' %}<span class="fuente">Programado</span>{% else %}<span class="fuente">Estimado</span>{% endif %}</div>
+          </div>
+          <div class="eta"><strong>{% if l.minutos <= 0 %}Ya{% else %}{{ l.minutos }}{% endif %}</strong><small>{% if l.minutos <= 0 %}llegando{% else %}min · {{ l.hora }}{% endif %}</small></div>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="vacio" data-llegadas-vacio {% if llegadas %}hidden{% endif %}>
+        <span class="vacio-icono">{% icono 'bus' 'lg' %}</span>
+        <h3>No hay buses en camino</h3>
+        <p>Ningún bus en ruta pasará pronto por esta estación. La lista se actualiza sola cuando salga uno.</p>
+      </div>
+      <div class="card-pie sutil">Los tiempos marcados como "Estimado" se calculan con el horario y la velocidad promedio de la ruta.</div>
+    </section>
+
+    <section class="card" aria-labelledby="t-mapa" style="align-self:start">
+      <div class="card-cab"><h2 id="t-mapa">{% icono 'mapa' %} Buses cerca</h2><span class="actualizado" data-estado-mapa="mapa-estacion"></span></div>
+      {% red_mapa rutas as red %}{{ red|json_script:'red-estacion' }}
+      <div class="mapa en-card" id="mapa-estacion" data-mapa data-sin-rueda data-red="red-estacion" data-api="{% url 'api:flota' %}"
+           data-rutas="{% for r in rutas %}{{ r.codigo }}{% if not forloop.last %},{% endif %}{% endfor %}"
+           data-estacion="{{ estacion.latitud|stringformat:'s' }},{{ estacion.longitud|stringformat:'s' }}" data-refresco="{{ REFRESCO_S }}"
+           role="region" aria-label="Mapa de buses que pasan por {{ estacion.nombre }}"></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}<script src="{% static 'sitm/js/llegadas.js' %}" defer></script>{% endblock %}

@@ -1,0 +1,30 @@
+{% load sitm %}{% comment %}
+Mapa en vivo con filtro por ruta. Parámetros: rutas, id, json_id, enlace (opcional, solo operación).
+{% endcomment %}
+<section class="card">
+  <div class="card-cab filtro-cab">
+    <div class="filtro-grupos" data-filtro-mapa="{{ id }}" role="group" aria-label="Rutas visibles en el mapa">
+      {% regroup rutas|dictsort:'tipo' by get_tipo_display as grupos %}
+      {% for grupo in grupos %}
+      <fieldset class="filtro-rutas">
+        <legend>{{ grupo.grouper }}</legend>
+        {% for r in grupo.list %}
+        <label title="{{ r.codigo }} · {{ r.nombre }}" style="--ruta:{{ r.color }}"><input type="checkbox" value="{{ r.codigo }}" checked><span>{{ r.codigo }}</span></label>
+        {% endfor %}
+      </fieldset>
+      {% endfor %}
+    </div>
+    <div class="fila filtro-acciones">
+      <button type="button" class="btn btn-fantasma btn-sm" data-filtro-todas="{{ id }}">Todas</button>
+      <button type="button" class="btn btn-fantasma btn-sm" data-filtro-ninguna="{{ id }}">Ninguna</button>
+      <span class="actualizado"><span class="punto-vivo"><span data-conteo-buses="{{ id }}">0</span>&nbsp;buses</span> · <span data-estado-mapa="{{ id }}" aria-live="polite">Cargando…</span></span>
+    </div>
+  </div>
+  {% red_mapa rutas as red %}{{ red|json_script:json_id }}
+  <div class="mapa alto en-card" id="{{ id }}" data-mapa data-api="{% url 'api:flota' %}" data-red="{{ json_id }}"
+       {% if enlace %}data-enlace="{{ enlace }}"{% endif %} data-refresco="{{ REFRESCO_S }}" role="region" aria-label="Mapa en vivo de la flota"></div>
+  <div class="card-pie leyenda">
+    <span><span class="marcador-bus gps" style="--ruta:#475569;transform:none;padding:2px 8px">GPS</span> Posición reportada por el bus</span>
+    <span><span class="marcador-bus estimada" style="--ruta:#475569;transform:none;padding:2px 8px">Est.</span> Estimada por horario (sin señal GPS)</span>
+  </div>
+</section>

@@ -1,0 +1,61 @@
+{% extends 'base/publico.html' %}{% load sitm %}
+{% block titulo %}¿Cuándo llega mi bus?{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<section class="heroe">
+  <div class="envoltura">
+    <div>
+      <span class="punto-vivo">{{ buses_en_ruta }} buses en ruta ahora</span>
+      <h1 style="margin-top:var(--s4)">Sabe <em>cuándo llega</em> tu bus antes de salir de casa.</h1>
+      <p class="bajada">Elige tu estación y mira en tiempo real qué buses vienen, por dónde van y cuántos minutos faltan.</p>
+      <form class="buscador" method="get" action="{% url 'publico:inicio' %}" role="search" data-sin-bloqueo>
+        <label class="sr-only" for="estacion">Tu estación</label>
+        <select class="campo select" id="estacion" name="estacion" required>
+          <option value="">¿En qué estación estás?</option>
+          {% for e in estaciones %}<option value="{{ e.codigo }}">{{ e.nombre }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-primario" type="submit">{% icono 'reloj' 'sm' %} Ver llegadas</button>
+      </form>
+      <div class="estadisticas">
+        <span><strong>{{ rutas|length }}</strong>rutas activas</span>
+        <span><strong>{{ estaciones|length }}</strong>estaciones y paradas</span>
+        <span><strong>{{ REFRESCO_S }} s</strong>entre actualizaciones</span>
+      </div>
+    </div>
+    {% red_mapa rutas as red %}{{ red|json_script:'red-inicio' }}
+    <div class="mapa" id="mapa-inicio" data-mapa data-sin-rueda data-api="{% url 'api:flota' %}" data-red="red-inicio" data-refresco="{{ REFRESCO_S }}"
+         role="region" aria-label="Vista previa del mapa en vivo"></div>
+  </div>
+</section>
+
+<div class="envoltura">
+  <section class="seccion" aria-labelledby="t-pasos">
+    <div class="seccion-cab"><div><p class="eyebrow">Cómo funciona</p><h2 id="t-pasos">Tres pasos, sin instalar nada</h2></div></div>
+    <div class="pasos">
+      <article class="card paso"><span class="num-paso">1</span><h3>Elige tu estación</h3><p>Búscala en la lista o tócala en el mapa.</p></article>
+      <article class="card paso"><span class="num-paso">2</span><h3>Mira quién viene</h3><p>Cada ruta muestra el bus que se acerca y los minutos que faltan.</p></article>
+      <article class="card paso"><span class="num-paso">3</span><h3>Sal a tiempo</h3><p>La pantalla se actualiza sola mientras la tengas abierta.</p></article>
+    </div>
+  </section>
+
+  <section class="seccion" id="rutas" aria-labelledby="t-rutas">
+    <div class="seccion-cab">
+      <div><p class="eyebrow">Red</p><h2 id="t-rutas">Rutas en operación</h2><p>Toca una ruta para ver sus paradas y el próximo bus en cada una.</p></div>
+      <a class="btn btn-secundario" href="{% url 'publico:mapa' %}">{% icono 'mapa' 'sm' %} Abrir mapa completo</a>
+    </div>
+    <div class="tarjetas-rutas">
+      {% for r in rutas %}
+      <a class="card tarjeta-ruta" style="--ruta:{{ r.color }}" href="{% url 'publico:ruta' r.codigo %}">
+        <div class="fila entre"><span class="chip-ruta lg" style="--ruta:{{ r.color }}">{{ r.codigo }}</span><span class="badge info sin-punto">{{ r.get_tipo_display }}</span></div>
+        <h3>{{ r.nombre }}</h3>
+        <p class="recorrido">{{ r.paradas.all|length }} paradas · bus cada {{ r.frecuencia_min }} min aprox.</p>
+        <div class="pie"><span class="punto-vivo">{{ r.en_ruta }} en ruta</span><span>Ver ruta {% icono 'derecha' 'sm' %}</span></div>
+      </a>
+      {% empty %}
+      <p class="muted">Aún no hay rutas publicadas.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

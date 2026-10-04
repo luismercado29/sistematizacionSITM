@@ -1,0 +1,14 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Mapa en vivo{% endblock %}
+{% block titulo_barra %}Mapa en vivo{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <h1>Mapa en vivo de la flota</h1>
+    <p>Toca un bus para ver su próxima parada, tiempo a destino y abrir el despacho.</p>
+  </div>
+</div>
+{% include 'componentes/mapa_vivo.html' with rutas=rutas id='mapa-operacion' json_id='red-operacion' enlace='/operacion/despachos/{id}/' %}
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

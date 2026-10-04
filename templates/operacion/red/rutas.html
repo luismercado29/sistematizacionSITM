@@ -1,0 +1,32 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Rutas{% endblock %}
+{% block titulo_barra %}Rutas y estaciones{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <h1>Rutas y estaciones</h1>
+    <p>Recorridos configurados, frecuencia objetivo y buses operando.</p>
+  </div>
+  {% if request.user.is_staff %}<a class="btn btn-secundario" href="{% url 'admin:red_ruta_add' %}">{% icono 'mas' 'sm' %} Nueva ruta</a>{% endif %}
+</div>
+{% if rutas %}
+<div class="tarjetas-rutas">
+  {% for r in rutas %}
+  <a class="card tarjeta-ruta" style="--ruta:{{ r.color }}" href="{% url 'operacion:ruta' r.pk %}">
+    <div class="fila entre">
+      <span class="chip-ruta lg" style="--ruta:{{ r.color }}">{{ r.codigo }}</span>
+      {% if r.activa %}<span class="badge info sin-punto">{{ r.get_tipo_display }}</span>{% else %}<span class="badge inactivo">Inactiva</span>{% endif %}
+    </div>
+    <h2 style="font-size:1.0625rem">{{ r.nombre }}</h2>
+    <p class="recorrido">{% for p in r.paradas.all %}{% if forloop.first or forloop.last %}{{ p.estacion.nombre }}{% if forloop.first %} → {% endif %}{% endif %}{% endfor %} · {{ r.paradas.all|length }} paradas</p>
+    <div class="pie">
+      <span>Cada {{ r.frecuencia_min }} min · {{ r.velocidad_kmh }} km/h</span>
+      <span class="punto-vivo">{{ r.en_ruta }} en ruta</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card"><div class="vacio"><span class="vacio-icono">{% icono 'ruta' 'lg' %}</span><h2>No hay rutas</h2><p>Carga los datos de ejemplo con <code>python manage.py cargar_demo</code> o crea rutas en Administración.</p></div></section>
+{% endif %}
+{% endblock %}

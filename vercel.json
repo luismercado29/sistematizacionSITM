@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "myproject/wsgi.py",
+      "src": "config/wsgi.py",
       "use": "@vercel/python",
       "config": { "includeFiles": "**" }
     }
@@ -10,7 +10,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "myproject/wsgi.py"
+      "dest": "config/wsgi.py"
     }
   ]
 }
