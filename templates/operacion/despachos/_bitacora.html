@@ -1,0 +1,18 @@
+{% load sitm %}{% if eventos %}
+<ul class="bitacora">
+  {% for ev in eventos %}
+  <li class="{{ ev.tipo }}">
+    <span class="ev-icono">
+      {% if ev.tipo == 'salida' %}{% icono 'iniciar' %}{% elif ev.tipo == 'llegada' %}{% icono 'bandera' %}{% elif ev.tipo == 'cancelacion' %}{% icono 'cancelar' %}{% elif ev.tipo == 'incidente' %}{% icono 'alerta' %}{% elif ev.tipo == 'creado' %}{% icono 'mas' %}{% else %}{% icono 'nota' %}{% endif %}
+    </span>
+    <div>
+      <div><strong>{{ ev.get_tipo_display }}</strong>{% if mostrar_despacho %} · <a href="{% url 'operacion:despacho' ev.despacho_id %}" class="mono">{{ ev.despacho.bus }}</a> <span class="chip-ruta" style="--ruta:{{ ev.despacho.ruta.color }};height:20px;min-width:0;font-size:.75rem">{{ ev.despacho.ruta.codigo }}</span>{% endif %}</div>
+      {% if ev.descripcion %}<p class="muted" style="font-size:.9375rem">{{ ev.descripcion }}</p>{% endif %}
+      <p class="ev-meta"><time datetime="{{ ev.creado|date:'c' }}">{{ ev.creado|date:'d/m H:i' }}</time> · {{ ev.usuario|nombre_usuario }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">Sin actividad registrada todavía.</p>
+{% endif %}

@@ -1,0 +1,58 @@
+{% extends 'base/base.html' %}{% load sitm %}
+{% block titulo %}Ingresar{% endblock %}
+{% block cuerpo %}
+<div class="ingreso">
+  <section class="ingreso-arte" aria-hidden="true">
+    <span class="marca" style="padding:0;border:0;height:auto">
+      <span class="marca-logo">{% icono 'bus' %}</span>
+      <span class="marca-texto"><strong>SITM Cartagena</strong><small>Centro de despacho</small></span>
+    </span>
+    <div>
+      <h2>Toda la operación del sistema en una sola pantalla.</h2>
+      <ul>
+        <li>{% icono 'despachar' %} Despacho de buses con validación de flota y conductores</li>
+        <li>{% icono 'en-vivo' %} Seguimiento en vivo y tiempos estimados de llegada</li>
+        <li>{% icono 'nota' %} Bitácora completa de cada recorrido, sin papel</li>
+      </ul>
+    </div>
+    <p class="sutil" style="color:#94A3B8">Acceso exclusivo para personal autorizado.</p>
+  </section>
+
+  <main class="ingreso-form" id="contenido">
+    <div class="caja pila">
+      <div class="fila entre">
+        <a class="btn btn-fantasma btn-sm" href="{% url 'publico:inicio' %}">{% icono 'atras' 'sm' %} Portal del pasajero</a>
+        {% include 'componentes/boton_tema.html' %}
+      </div>
+      <div class="pila-sm" style="margin-top:var(--s6)">
+        <p class="eyebrow">Operadores</p>
+        <h1>Ingresa al centro de despacho</h1>
+        <p class="muted">Usa la cuenta que te asignó tu supervisor.</p>
+      </div>
+
+      {% if form.non_field_errors %}
+      <div class="aviso error" role="alert">{% icono 'alerta' %}<div>{{ form.non_field_errors|join:' ' }}</div></div>
+      {% endif %}
+      {% if MODO_DEMO %}
+      <div class="aviso info">{% icono 'info' %}<div>Demostración: pide las credenciales de prueba al administrador del proyecto.</div></div>
+      {% endif %}
+
+      <form method="post" class="pila" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% include 'componentes/campo.html' with campo=form.username %}
+        <div class="grupo">
+          <label for="{{ form.password.id_for_label }}">Contraseña<span class="req" aria-hidden="true">*</span></label>
+          <div style="position:relative">
+            {{ form.password }}
+            <button type="button" class="btn btn-fantasma btn-icono" style="position:absolute;right:0;top:0" aria-label="Mostrar contraseña" aria-pressed="false"
+                    data-ver-clave="{{ form.password.id_for_label }}">{% icono 'ojo' %}</button>
+          </div>
+          {% if form.password.errors %}<p class="error-campo" role="alert">{% icono 'alerta' 'sm' %}<span>{{ form.password.errors|join:' ' }}</span></p>{% endif %}
+        </div>
+        <button class="btn btn-primario btn-bloque" type="submit">Ingresar {% icono 'flecha' 'sm' %}</button>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}

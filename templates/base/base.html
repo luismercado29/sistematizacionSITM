@@ -1,0 +1,26 @@
+{% load static %}<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}SITM Cartagena{% endblock %} · Despacho y seguimiento</title>
+  <meta name="description" content="{% block descripcion %}Sistema de despacho de buses y seguimiento en tiempo real del SITM de Cartagena.{% endblock %}">
+  <meta name="theme-color" content="#0B1530">
+  {% if MAPBOX_TOKEN %}<meta name="sitm-mapbox" content="{{ MAPBOX_TOKEN }}">{% endif %}
+  <link rel="icon" href="{% static 'sitm/img/favicon.svg' %}" type="image/svg+xml">
+  {# Sin defer a propósito: aplica el tema guardado antes de pintar para evitar el destello. #}
+  <script src="{% static 'sitm/js/tema.js' %}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap">
+  {% block css_extra %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'sitm/css/sitm.css' %}">
+</head>
+<body class="{% block clase_body %}{% endblock %}">
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  {% block cuerpo %}{% endblock %}
+  {% include 'componentes/mensajes.html' %}
+  <script src="{% static 'sitm/js/app.js' %}" defer></script>
+  {% block js_extra %}{% endblock %}
+</body>
+</html>

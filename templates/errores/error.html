@@ -1,0 +1,15 @@
+{% extends 'base/publico.html' %}{% load sitm %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<section class="error-pagina">
+  <div class="pila" style="max-width:48ch">
+    <p class="codigo">{{ codigo }}</p>
+    <h1>{{ titulo }}</h1>
+    <p class="muted">{{ detalle }}</p>
+    <div class="fila" style="justify-content:center">
+      <a class="btn btn-primario" href="{% url 'publico:inicio' %}">{% icono 'estacion' 'sm' %} Ir al inicio</a>
+      {% if es_operador %}<a class="btn btn-secundario" href="{% url 'operacion:tablero' %}">{% icono 'tablero' 'sm' %} Volver al tablero</a>{% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

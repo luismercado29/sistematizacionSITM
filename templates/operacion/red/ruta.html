@@ -1,0 +1,52 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Ruta {{ ruta.codigo }}{% endblock %}
+{% block titulo_barra %}Ruta {{ ruta.codigo }}{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url 'operacion:rutas' %}">Rutas</a>{% icono 'derecha' 'sm' %}<span>{{ ruta.codigo }}</span></nav>
+    <div class="fila"><span class="chip-ruta lg" style="--ruta:{{ ruta.color }}">{{ ruta.codigo }}</span><h1>{{ ruta.nombre }}</h1></div>
+    <p>{{ ruta.get_tipo_display }} · {{ ruta.longitud_km|floatformat:1 }} km · {{ ruta.duracion_min|minutos }} de recorrido</p>
+  </div>
+  <div class="fila">
+    <a class="btn btn-secundario" href="{% url 'publico:ruta' ruta.codigo %}" target="_blank" rel="noopener">{% icono 'pin' 'sm' %} Vista del pasajero</a>
+    <a class="btn btn-primario" href="{% url 'operacion:nuevo' %}?ruta={{ ruta.pk }}">{% icono 'despachar' 'sm' %} Despachar en esta ruta</a>
+  </div>
+</div>
+
+<div class="grid-principal">
+  <section class="card">
+    <div class="card-cab"><h2>{% icono 'mapa' %} Trazado</h2><span class="actualizado" data-estado-mapa="mapa-ruta">Cargando…</span></div>
+    {% red_mapa ruta_lista as red %}{{ red|json_script:'red-ruta' }}
+    <div class="mapa en-card" id="mapa-ruta" data-mapa data-sin-rueda data-red="red-ruta" data-rutas="{{ ruta.codigo }}"
+         data-api="{% url 'api:ruta_en_vivo' ruta.codigo %}" data-enlace="/operacion/despachos/{id}/" data-refresco="{{ REFRESCO_S }}"
+         role="region" aria-label="Mapa de la ruta {{ ruta.codigo }}"></div>
+  </section>
+
+  <div class="grid" style="align-content:start">
+    {% if form %}
+    <section class="card">
+      <div class="card-cab"><h2>{% icono 'ajustes' %} Parámetros operativos</h2></div>
+      <form method="post" action="{% url 'operacion:ruta_guardar' ruta.pk %}" class="card-cuerpo pila" novalidate>
+        {% csrf_token %}
+        <div class="form-grid">{% for campo in form %}{% include 'componentes/campo.html' with campo=campo %}{% endfor %}</div>
+        <p class="ayuda">Las paradas se editan en Administración; las distancias y tiempos se recalculan solos.</p>
+        <button class="btn btn-primario" type="submit">{% icono 'ok' 'sm' %} Guardar cambios</button>
+      </form>
+    </section>
+    {% endif %}
+    <section class="card">
+      <div class="card-cab"><h2>{% icono 'estacion' %} Paradas</h2><span class="sutil">{{ paradas|length }}</span></div>
+      <ol class="paradas-ruta" style="--ruta:{{ ruta.color }};padding:var(--s3) 0">
+        {% for p in paradas %}
+        <li><span class="nodo" aria-hidden="true"></span>
+          <span>{{ p.estacion.nombre }}<br><span class="sutil">km {{ p.distancia_km|floatformat:1 }}</span></span>
+          <span class="prox">+{{ p.minutos_desde_inicio }} min</span></li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

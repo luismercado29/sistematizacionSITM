@@ -1,0 +1,17 @@
+{% load sitm %}{% comment %}
+Campo de formulario accesible: etiqueta visible, ayuda persistente y error junto al campo.
+Uso: {% include 'componentes/campo.html' with campo=form.nombre clase='ancho' %}
+{% endcomment %}
+<div class="grupo {{ clase }}"{% if atributos %} {{ atributos }}{% endif %}>
+  {% if campo.field.widget.input_type == 'checkbox' %}
+    <label class="check-fila" for="{{ campo.id_for_label }}">{{ campo }} <span>{{ campo.label }}</span></label>
+  {% else %}
+    <label for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %}<span class="req" aria-hidden="true">*</span>{% endif %}</label>
+    {{ campo }}
+  {% endif %}
+  {% if campo.errors %}
+    <p class="error-campo" id="{{ campo.auto_id }}-error" role="alert">{% icono 'alerta' 'sm' %}<span>{{ campo.errors|join:' ' }}</span></p>
+  {% elif campo.help_text %}
+    <p class="ayuda" id="{{ campo.auto_id }}-ayuda">{{ campo.help_text }}</p>
+  {% endif %}
+</div>

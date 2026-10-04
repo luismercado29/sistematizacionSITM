@@ -1,0 +1,27 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block titulo_barra %}{{ titulo }}{% endblock %}
+{% block accion_barra %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url volver %}">{% if icono == 'bus' %}Flota{% else %}Conductores{% endif %}</a>{% icono 'derecha' 'sm' %}<span>{% if objeto %}Editar{% else %}Nuevo{% endif %}</span></nav>
+    <h1>{{ titulo }}</h1>
+  </div>
+</div>
+<section class="card" style="max-width:860px">
+  <form method="post" class="card-cuerpo pila" novalidate>
+    {% csrf_token %}
+    {% if form.errors %}
+    <div class="aviso error" role="alert">{% icono 'alerta' %}<div>Revisa los campos marcados.{% if form.non_field_errors %} {{ form.non_field_errors|join:' ' }}{% endif %}</div></div>
+    {% endif %}
+    <div class="form-grid">
+      {% for campo in form %}{% include 'componentes/campo.html' with campo=campo %}{% endfor %}
+    </div>
+    <div class="fila entre">
+      <a class="btn btn-fantasma" href="{% url volver %}">Cancelar</a>
+      <button class="btn btn-primario" type="submit">{% icono 'ok' 'sm' %} Guardar</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

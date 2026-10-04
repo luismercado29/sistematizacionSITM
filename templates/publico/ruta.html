@@ -1,0 +1,37 @@
+{% extends 'base/publico.html' %}{% load sitm static %}
+{% block titulo %}Ruta {{ ruta.codigo }} · {{ ruta.nombre }}{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="envoltura">
+  <div class="pagina-cab" style="padding-top:var(--s6)">
+    <div>
+      <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url 'publico:inicio' %}#rutas">Rutas</a>{% icono 'derecha' 'sm' %}<span>{{ ruta.codigo }}</span></nav>
+      <div class="fila"><span class="chip-ruta lg" style="--ruta:{{ ruta.color }}">{{ ruta.codigo }}</span><h1>{{ ruta.nombre }}</h1></div>
+      <p>{{ ruta.get_tipo_display }} · {{ paradas|length }} paradas · {{ ruta.duracion_min|minutos }} de recorrido · bus cada {{ ruta.frecuencia_min }} min aprox.</p>
+    </div>
+    <span class="punto-vivo"><span data-buses-ruta>{{ buses_en_ruta }}</span>&nbsp;buses en ruta</span>
+  </div>
+
+  <div class="grid-principal">
+    <section class="card">
+      {% red_mapa ruta_lista as red %}{{ red|json_script:'red-ruta' }}
+      <div class="mapa alto" id="mapa-ruta" data-mapa data-red="red-ruta" data-rutas="{{ ruta.codigo }}"
+           data-api="{% url 'api:ruta_en_vivo' ruta.codigo %}" data-refresco="{{ REFRESCO_S }}" role="region" aria-label="Mapa de la ruta {{ ruta.codigo }}"></div>
+    </section>
+    <section class="card" aria-labelledby="t-paradas" style="align-self:start">
+      <div class="card-cab"><h2 id="t-paradas">{% icono 'estacion' %} Paradas y próximo bus</h2></div>
+      <ol class="paradas-ruta" style="--ruta:{{ ruta.color }};padding:var(--s3) 0" data-paradas-ruta="{% url 'api:ruta_en_vivo' ruta.codigo %}" data-refresco="{{ REFRESCO_S }}">
+        {% for p in paradas %}
+        <li>
+          <span class="nodo" aria-hidden="true"></span>
+          <a href="{% url 'publico:estacion' p.estacion.codigo %}">{{ p.estacion.nombre }}</a>
+          {% if forloop.last %}<span class="prox sutil">Fin del recorrido</span>
+          {% else %}<span class="prox" data-prox="{{ p.estacion.codigo }}">{% if p.proximo_min is None %}Sin buses{% else %}{{ p.proximo_min|minutos }}{% endif %}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}<script src="{% static 'sitm/js/llegadas.js' %}" defer></script>{% endblock %}

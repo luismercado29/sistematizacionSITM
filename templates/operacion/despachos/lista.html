@@ -1,0 +1,84 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Despachos{% endblock %}
+{% block titulo_barra %}Despachos{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <h1>Registro de despachos</h1>
+    <p>{{ total }} despacho{{ total|pluralize }}{% if hay_filtros %} con los filtros aplicados{% endif %}.</p>
+  </div>
+  <div class="fila">
+    <a class="btn btn-secundario" href="{% url 'operacion:exportar' %}{% consulta pagina=None %}">{% icono 'descargar' 'sm' %} Exportar CSV</a>
+    <a class="btn btn-primario" href="{% url 'operacion:nuevo' %}">{% icono 'despachar' 'sm' %} Despachar bus</a>
+  </div>
+</div>
+
+<section class="card mb-5" aria-label="Filtros">
+  <form method="get" class="card-cuerpo compacto filtros" data-auto data-sin-bloqueo role="search">
+    {% for campo in form %}
+    <div class="grupo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+    </div>
+    {% endfor %}
+    <div class="fila">
+      <button class="btn btn-primario" type="submit">{% icono 'buscar' 'sm' %} Filtrar</button>
+      {% if hay_filtros %}<a class="btn btn-fantasma" href="{% url 'operacion:despachos' %}">Limpiar</a>{% endif %}
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  {% if pagina.object_list %}
+  <div class="tabla-scroll">
+    <table class="tabla apilable">
+      <caption class="sr-only">Despachos ordenados del más reciente al más antiguo</caption>
+      <thead><tr>
+        <th scope="col">Folio</th><th scope="col">Ruta</th><th scope="col">Bus</th><th scope="col">Conductor</th>
+        <th scope="col">Programado</th><th scope="col">Salida</th><th scope="col">Llegada</th><th scope="col">Estado</th>
+      </tr></thead>
+      <tbody>
+      {% for d in pagina %}
+        <tr>
+          <td data-label="Folio"><a class="fila-enlace mono" href="{% url 'operacion:despacho' d.pk %}">{{ d.folio }}</a></td>
+          <td data-label="Ruta"><span class="chip-ruta" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span></td>
+          <td data-label="Bus" class="mono">{{ d.bus }}</td>
+          <td data-label="Conductor">{{ d.conductor.nombre }}</td>
+          <td data-label="Programado" class="mono nowrap">{{ d.hora_programada|date:'d/m H:i' }}</td>
+          <td data-label="Salida" class="mono">
+            {% if d.hora_salida %}{{ d.hora_salida|time:'H:i' }}
+              {% if d.demora_salida_min > 3 %}<span class="badge warn sin-punto" title="Salió {{ d.demora_salida_min }} min tarde">+{{ d.demora_salida_min }}</span>{% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td data-label="Llegada" class="mono">{{ d.hora_llegada|time:'H:i'|default:'—' }}</td>
+          <td data-label="Estado"><span class="badge {{ d.estado }}">{{ d.get_estado_display }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagina.has_other_pages %}
+  <nav class="card-pie paginacion" aria-label="Paginación">
+    <span class="sutil">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    <div class="fila">
+      {% if pagina.has_previous %}<a class="btn btn-secundario btn-sm" href="{% consulta pagina=pagina.previous_page_number %}">{% icono 'atras' 'sm' %} Anterior</a>{% endif %}
+      {% if pagina.has_next %}<a class="btn btn-secundario btn-sm" href="{% consulta pagina=pagina.next_page_number %}">Siguiente {% icono 'flecha' 'sm' %}</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+  {% else %}
+  <div class="vacio">
+    <span class="vacio-icono">{% icono 'nota' 'lg' %}</span>
+    {% if hay_filtros %}
+      <h2>Ningún despacho coincide</h2>
+      <p>Prueba con otra fecha o quita algún filtro.</p>
+      <a class="btn btn-secundario" href="{% url 'operacion:despachos' %}">Quitar filtros</a>
+    {% else %}
+      <h2>Aún no hay despachos</h2>
+      <p>Cada salida que registres quedará aquí con su bitácora completa.</p>
+      <a class="btn btn-primario" href="{% url 'operacion:nuevo' %}">{% icono 'despachar' 'sm' %} Despachar bus</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

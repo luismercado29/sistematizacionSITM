@@ -1,0 +1,57 @@
+{% extends 'base/base.html' %}{% load sitm %}
+{% block cuerpo %}
+<div class="app">
+  <aside class="lateral" id="lateral" aria-label="Navegación principal">
+    <a class="marca" href="{% url 'operacion:tablero' %}">
+      <span class="marca-logo">{% icono 'bus' %}</span>
+      <span class="marca-texto"><strong>SITM Cartagena</strong><small>Centro de despacho</small></span>
+    </a>
+    <nav class="nav-lateral">
+      <div class="nav-grupo">
+        <p class="nav-titulo">Operación</p>
+        <a href="{% url 'operacion:tablero' %}" class="{% if request.resolver_match.url_name == 'tablero' %}is-active{% endif %}" {% if request.resolver_match.url_name == 'tablero' %}aria-current="page"{% endif %}>{% icono 'tablero' %} Tablero</a>
+        <a href="{% url 'operacion:nuevo' %}" class="{% activo '/operacion/despachos/nuevo/' %}">{% icono 'despachar' %} Despachar bus</a>
+        <a href="{% url 'operacion:despachos' %}" class="{% if request.resolver_match.url_name in 'despachos,despacho' %}is-active{% endif %}">{% icono 'nota' %} Despachos</a>
+        <a href="{% url 'operacion:mapa' %}" class="{% activo '/operacion/mapa/' %}">{% icono 'en-vivo' %} Mapa en vivo <span class="contador" aria-label="{{ nav_en_ruta }} buses en ruta">{{ nav_en_ruta }}</span></a>
+      </div>
+      <div class="nav-grupo">
+        <p class="nav-titulo">Recursos</p>
+        <a href="{% url 'operacion:buses' %}" class="{% activo '/operacion/flota/' %}">{% icono 'bus' %} Flota</a>
+        <a href="{% url 'operacion:conductores' %}" class="{% activo '/operacion/conductores/' %}">{% icono 'usuarios' %} Conductores</a>
+        <a href="{% url 'operacion:rutas' %}" class="{% activo '/operacion/rutas/' %}">{% icono 'ruta' %} Rutas y estaciones</a>
+      </div>
+      <div class="nav-grupo">
+        <p class="nav-titulo">Más</p>
+        <a href="{% url 'publico:inicio' %}" target="_blank" rel="noopener">{% icono 'pin' %} Portal del pasajero</a>
+        {% if request.user.is_staff %}<a href="{% url 'admin:index' %}">{% icono 'ajustes' %} Administración</a>{% endif %}
+      </div>
+    </nav>
+    <div class="lateral-pie">
+      <div class="usuario">
+        <span class="avatar" aria-hidden="true">{{ request.user.get_short_name|default:request.user.username|first|upper }}</span>
+        <span class="datos"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong><small>{{ rol_usuario }}</small></span>
+        <form method="post" action="{% url 'cuentas:salir' %}" data-sin-bloqueo>
+          {% csrf_token %}
+          <button class="btn btn-fantasma btn-icono" type="submit" aria-label="Cerrar sesión" title="Cerrar sesión">{% icono 'salir' %}</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  <div class="velo" aria-hidden="true"></div>
+
+  <div class="zona-principal">
+    {% if MODO_DEMO %}<div class="demo-banda">{% icono 'info' 'sm' %} Modo demostración: el sistema despacha y cierra recorridos automáticamente con datos ficticios.</div>{% endif %}
+    <header class="barra-sup">
+      <button class="btn btn-fantasma btn-icono solo-movil" type="button" data-abrir-menu aria-controls="lateral" aria-expanded="false" aria-label="Abrir menú">{% icono 'menu' %}</button>
+      <span class="titulo">{% block titulo_barra %}{% endblock %}</span>
+      <span class="espacio"></span>
+      <span class="reloj" aria-label="Hora actual">{% icono 'reloj' 'sm' %}<span data-reloj>{% now 'H:i:s' %}</span></span>
+      {% include 'componentes/boton_tema.html' %}
+      {% block accion_barra %}<a class="btn btn-primario btn-sm" href="{% url 'operacion:nuevo' %}">{% icono 'mas' 'sm' %}<span class="solo-escritorio">Nuevo despacho</span><span class="sr-only solo-movil">Nuevo despacho</span></a>{% endblock %}
+    </header>
+    <main class="contenido" id="contenido" tabindex="-1">
+      {% block contenido %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

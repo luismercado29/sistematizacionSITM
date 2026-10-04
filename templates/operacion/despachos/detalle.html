@@ -1,0 +1,132 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Despacho {{ d.folio }}{% endblock %}
+{% block titulo_barra %}Despacho {{ d.folio }}{% endblock %}
+{% block css_extra %}{% include 'base/leaflet.html' with parte='css' %}{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <nav class="ruta-migas" aria-label="Ruta de navegación"><a href="{% url 'operacion:despachos' %}">Despachos</a>{% icono 'derecha' 'sm' %}<span class="mono">{{ d.folio }}</span></nav>
+    <div class="fila">
+      <span class="chip-ruta lg" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span>
+      <h1>{{ d.ruta.nombre }}</h1>
+      <span class="badge {{ d.estado }}">{{ d.get_estado_display }}</span>
+    </div>
+    <p>Bus <strong class="mono">{{ d.bus }}</strong> · {{ d.conductor.nombre }} · despachado por {{ d.despachador|nombre_usuario:'el sistema' }}</p>
+  </div>
+  <div class="fila no-imprimir">
+    {% if d.estado == 'programado' %}
+      <form method="post" action="{% url 'operacion:iniciar' d.pk %}">{% csrf_token %}
+        <button class="btn btn-primario" type="submit">{% icono 'iniciar' 'sm' %} Dar salida</button>
+      </form>
+    {% elif d.estado == 'en_ruta' %}
+      <button class="btn btn-exito" type="button" data-dialogo="dlg-finalizar">{% icono 'bandera' 'sm' %} Cerrar recorrido</button>
+    {% endif %}
+    {% if d.activo %}
+      <button class="btn btn-secundario" type="button" data-dialogo="dlg-novedad">{% icono 'nota' 'sm' %} Novedad</button>
+      <button class="btn btn-peligro" type="button" data-dialogo="dlg-cancelar">{% icono 'cancelar' 'sm' %} Cancelar</button>
+    {% endif %}
+  </div>
+</div>
+
+<section class="kpis" aria-label="Resumen del despacho">
+  <div class="card kpi"><div class="kpi-cab">Programado</div><p class="kpi-valor">{{ d.hora_programada|time:'H:i' }}</p><p class="kpi-nota">{{ d.hora_programada|date:'l j \d\e F' }}</p></div>
+  <div class="card kpi {% if d.demora_salida_min > 3 %}warn{% endif %}"><div class="kpi-cab">Salida real</div><p class="kpi-valor">{{ d.hora_salida|time:'H:i'|default:'—' }}</p>
+    <p class="kpi-nota">{% if d.demora_salida_min is None %}Aún no sale{% elif d.demora_salida_min > 0 %}{{ d.demora_salida_min }} min tarde{% elif d.demora_salida_min < 0 %}Salió antes{% else %}A tiempo{% endif %}</p></div>
+  {% if estado %}
+  <div class="card kpi ok"><div class="kpi-cab">Llega a {{ d.ruta.destino }}</div><p class="kpi-valor">{{ estado.minutos_a_destino|minutos }}</p>
+    <p class="kpi-nota">{% if estado.fuente == 'gps' %}Según GPS{% else %}Estimado por horario{% endif %} · {% widthratio estado.progreso 1 100 %}% del recorrido</p></div>
+  {% else %}
+  <div class="card kpi"><div class="kpi-cab">Llegada</div><p class="kpi-valor">{{ d.hora_llegada|time:'H:i'|default:'—' }}</p>
+    <p class="kpi-nota">{% if d.duracion_real_min %}Recorrido de {{ d.duracion_real_min|minutos }} (plan: {{ d.ruta.duracion_min|minutos }}){% else %}Duración planeada: {{ d.ruta.duracion_min|minutos }}{% endif %}</p></div>
+  {% endif %}
+  <div class="card kpi"><div class="kpi-cab">Vehículo</div><p class="kpi-valor" style="font-size:1.5rem">{{ d.bus.placa }}</p><p class="kpi-nota">{{ d.bus.get_tipologia_display }} · {{ d.bus.capacidad }} pasajeros</p></div>
+</section>
+
+<div class="grid-principal">
+  <div class="grid">
+    <section class="card" aria-labelledby="t-mapa">
+      <div class="card-cab"><h2 id="t-mapa">{% icono 'mapa' %} Recorrido</h2>
+        {% if d.estado == 'en_ruta' %}<span class="actualizado" data-estado-mapa="mapa-despacho">Cargando…</span>{% endif %}</div>
+      {% red_mapa rutas_mapa as red %}{{ red|json_script:'red-despacho' }}
+      <div class="mapa en-card" id="mapa-despacho" data-mapa data-sin-rueda data-red="red-despacho" data-rutas="{{ d.ruta.codigo }}"
+           data-api="{% url 'api:ruta_en_vivo' d.ruta.codigo %}" data-enlace="/operacion/despachos/{id}/" data-refresco="{{ REFRESCO_S }}" data-destacar="{{ d.pk }}"
+           role="region" aria-label="Mapa de la ruta {{ d.ruta.codigo }}"></div>
+    </section>
+    <section class="card" aria-labelledby="t-bitacora">
+      <div class="card-cab"><h2 id="t-bitacora">{% icono 'actividad' %} Bitácora</h2></div>
+      <div class="card-cuerpo compacto">{% include 'operacion/despachos/_bitacora.html' with eventos=eventos %}</div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="t-itinerario" style="align-self:start">
+    <div class="card-cab"><h2 id="t-itinerario">{% icono 'ruta' %} Itinerario</h2><span class="sutil">{{ d.ruta.longitud_km|floatformat:1 }} km</span></div>
+    <div class="card-cuerpo">
+      <ol class="itinerario" style="--ruta:{{ d.ruta.color }}">
+        {% for f in itinerario %}
+        <li class="{{ f.situacion }}{% if f.es_proxima %} proxima{% endif %}">
+          <span class="nodo" aria-hidden="true"></span>
+          <div>
+            <div class="nombre">{{ f.parada.estacion.nombre }}</div>
+            <div class="sutil">{% if f.es_proxima %}Próxima parada{% elif f.situacion == 'pasada' %}Pasó{% else %}Pendiente{% endif %} · km {{ f.parada.distancia_km|floatformat:1 }}</div>
+          </div>
+          <span class="hora">{% if f.situacion == 'pendiente' and d.estado != 'cancelado' %}~{% endif %}{{ f.hora|time:'H:i' }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      {% if d.observaciones %}<hr class="separador"><p class="sutil">Observaciones</p><p>{{ d.observaciones }}</p>{% endif %}
+    </div>
+  </section>
+</div>
+
+{% if d.activo %}
+<dialog class="dialogo" id="dlg-cancelar" aria-labelledby="dlg-cancelar-t">
+  <form method="post" action="{% url 'operacion:cancelar' d.pk %}">
+    {% csrf_token %}
+    <div class="dialogo-cab"><h2 id="dlg-cancelar-t">Cancelar {{ d.folio }}</h2>
+      <button class="btn btn-fantasma btn-icono" type="button" data-cerrar-dialogo aria-label="Cerrar">{% icono 'cerrar' %}</button></div>
+    <div class="dialogo-cuerpo pila">
+      <p class="muted">El bus {{ d.bus }} y {{ d.conductor.nombre }} quedarán libres para otro despacho. Esta acción no se puede deshacer.</p>
+      {% include 'componentes/campo.html' with campo=cancelar_form.motivo %}
+    </div>
+    <div class="dialogo-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar-dialogo>Volver</button>
+      <button class="btn btn-peligro solido" type="submit">{% icono 'cancelar' 'sm' %} Cancelar despacho</button>
+    </div>
+  </form>
+</dialog>
+<dialog class="dialogo" id="dlg-novedad" aria-labelledby="dlg-novedad-t">
+  <form method="post" action="{% url 'operacion:novedad' d.pk %}">
+    {% csrf_token %}
+    <div class="dialogo-cab"><h2 id="dlg-novedad-t">Registrar novedad</h2>
+      <button class="btn btn-fantasma btn-icono" type="button" data-cerrar-dialogo aria-label="Cerrar">{% icono 'cerrar' %}</button></div>
+    <div class="dialogo-cuerpo pila">
+      {% include 'componentes/campo.html' with campo=novedad_form.descripcion %}
+      {% include 'componentes/campo.html' with campo=novedad_form.incidente %}
+    </div>
+    <div class="dialogo-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar-dialogo>Volver</button>
+      <button class="btn btn-primario" type="submit">Guardar novedad</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
+{% if d.estado == 'en_ruta' %}
+<dialog class="dialogo" id="dlg-finalizar" aria-labelledby="dlg-finalizar-t">
+  <form method="post" action="{% url 'operacion:finalizar' d.pk %}">
+    {% csrf_token %}
+    <div class="dialogo-cab"><h2 id="dlg-finalizar-t">Cerrar recorrido</h2>
+      <button class="btn btn-fantasma btn-icono" type="button" data-cerrar-dialogo aria-label="Cerrar">{% icono 'cerrar' %}</button></div>
+    <div class="dialogo-cuerpo pila">
+      <p class="muted">Registra la llegada del bus {{ d.bus }} a {{ d.ruta.destino }}. El bus quedará disponible.</p>
+      <div class="grupo"><label for="obs-final">Observación (opcional)</label>
+        <textarea class="campo" id="obs-final" name="observacion" rows="2" maxlength="200"></textarea></div>
+    </div>
+    <div class="dialogo-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar-dialogo>Volver</button>
+      <button class="btn btn-exito" type="submit">{% icono 'bandera' 'sm' %} Registrar llegada</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}
+{% block js_extra %}{% include 'base/leaflet.html' with parte='js' %}{% endblock %}

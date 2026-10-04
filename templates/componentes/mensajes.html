@@ -1,0 +1,11 @@
+{% load sitm %}{% if messages %}
+<div class="toasts" role="status" aria-live="polite">
+  {% for m in messages %}
+  <div class="toast {{ m.tags }}">
+    {% if m.tags == 'success' %}{% icono 'ok' %}{% elif m.tags == 'error' %}{% icono 'alerta' %}{% else %}{% icono 'info' %}{% endif %}
+    <p>{{ m }}</p>
+    <button type="button" class="btn btn-fantasma btn-sm btn-icono" aria-label="Cerrar mensaje">{% icono 'cerrar' 'sm' %}</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

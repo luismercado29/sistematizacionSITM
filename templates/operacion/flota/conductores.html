@@ -1,0 +1,53 @@
+{% extends 'base/operacion.html' %}{% load sitm %}
+{% block titulo %}Conductores{% endblock %}
+{% block titulo_barra %}Conductores{% endblock %}
+{% block contenido %}
+<div class="pagina-cab">
+  <div>
+    <h1>Conductores</h1>
+    <p>Disponibilidad, licencias y recorridos del día.</p>
+  </div>
+  {% if es_supervisor %}<a class="btn btn-primario" href="{% url 'operacion:conductor_nuevo' %}">{% icono 'mas' 'sm' %} Registrar conductor</a>{% endif %}
+</div>
+
+<form method="get" class="mb-5 fila" role="search" data-sin-bloqueo>
+  <label class="sr-only" for="q">Buscar conductor</label>
+  <input class="campo" style="max-width:360px" type="search" id="q" name="q" value="{{ q }}" placeholder="Nombre, cédula o licencia">
+  <button class="btn btn-secundario" type="submit">{% icono 'buscar' 'sm' %} Buscar</button>
+  {% if q %}<a class="btn btn-fantasma" href="{% url 'operacion:conductores' %}">Limpiar</a>{% endif %}
+</form>
+
+<section class="card">
+  {% if conductores %}
+  <div class="tabla-scroll">
+    <table class="tabla apilable">
+      <thead><tr><th scope="col">Conductor</th><th scope="col">Licencia</th><th scope="col">Vence</th><th scope="col">Estado</th><th scope="col">Hoy</th><th scope="col">Asignación</th>{% if es_supervisor %}<th scope="col"><span class="sr-only">Acciones</span></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for c in conductores %}
+        <tr>
+          <td data-label="Conductor"><div class="celda-doble"><span class="principal">{{ c.nombre }}</span><small class="mono">CC {{ c.documento }}{% if c.telefono %} · {{ c.telefono }}{% endif %}</small></div></td>
+          <td data-label="Licencia"><span class="badge sin-punto info">{{ c.categoria }}</span> <span class="mono sutil">{{ c.licencia }}</span></td>
+          <td data-label="Vence" class="mono nowrap">
+            {{ c.vencimiento_licencia|date:'d/m/Y' }}
+            {% if not c.licencia_vigente %}<span class="badge peligro">Vencida</span>{% elif c.dias_para_vencer <= 30 %}<span class="badge warn">{{ c.dias_para_vencer }} días</span>{% endif %}
+          </td>
+          <td data-label="Estado"><span class="badge {{ c.estado }}">{{ c.get_estado_display }}</span></td>
+          <td data-label="Hoy" class="mono">{{ c.recorridos_hoy }} recorrido{{ c.recorridos_hoy|pluralize }}</td>
+          <td data-label="Asignación">
+            {% with d=c.activos.0 %}{% if d %}<a href="{% url 'operacion:despacho' d.pk %}" class="fila" style="gap:8px"><span class="chip-ruta" style="--ruta:{{ d.ruta.color }}">{{ d.ruta.codigo }}</span><span class="mono">{{ d.bus }}</span></a>{% else %}<span class="sutil">Libre</span>{% endif %}{% endwith %}
+          </td>
+          {% if es_supervisor %}<td class="acciones" data-label=""><a class="btn btn-fantasma btn-sm" href="{% url 'operacion:conductor_editar' c.pk %}" aria-label="Editar a {{ c.nombre }}">{% icono 'editar' 'sm' %} Editar</a></td>{% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="vacio">
+    <span class="vacio-icono">{% icono 'usuarios' 'lg' %}</span>
+    <h2>{% if q %}Nadie coincide con "{{ q }}"{% else %}Aún no hay conductores{% endif %}</h2>
+    {% if es_supervisor and not q %}<a class="btn btn-primario" href="{% url 'operacion:conductor_nuevo' %}">{% icono 'mas' 'sm' %} Registrar conductor</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
